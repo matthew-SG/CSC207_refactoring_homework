@@ -22,11 +22,8 @@ public class StatementPrinter {
      * @throws RuntimeException if one of the play types is not known
      */
     public String statement() {
-        int totalAmount = 0;
-        int volumeCredits = 0;
         final StringBuilder result = new StringBuilder("Statement for "
                 + invoice.getCustomer() + System.lineSeparator());
-
         for (Performance performance : invoice.getPerformances()) {
             final Play play = plays.get(performance.getPlayID());
             final int audience = performance.getAudience();
@@ -35,16 +32,40 @@ public class StatementPrinter {
 
             final int thisAmount = getAmount(playType, audience);
 
-            // add volume credits
-            volumeCredits += getVolumeCredits(audience, playType);
-
             // print line for this order
             result.append(String.format("  %s: %s (%s seats)%n", playName, usd(thisAmount), audience));
+        }
+
+        result.append(String.format("Amount owed is %s%n", usd(getTotalAmount())));
+        result.append(String.format("You earned %s credits%n", getTotalVolumeCredits()));
+        return result.toString();
+    }
+
+    private int getTotalAmount() {
+        int totalAmount = 0;
+        for (Performance performance : invoice.getPerformances()) {
+            final Play play = plays.get(performance.getPlayID());
+            final int audience = performance.getAudience();
+            final String playType = play.getType();
+
+            final int thisAmount = getAmount(playType, audience);
+
             totalAmount += thisAmount;
         }
-        result.append(String.format("Amount owed is %s%n", usd(totalAmount)));
-        result.append(String.format("You earned %s credits%n", volumeCredits));
-        return result.toString();
+        return totalAmount;
+    }
+
+    private int getTotalVolumeCredits() {
+        int result = 0;
+        for (Performance performance : invoice.getPerformances()) {
+            final Play play = plays.get(performance.getPlayID());
+            final int audience = performance.getAudience();
+            final String playType = play.getType();
+
+            // add volume credits
+            result += getVolumeCredits(audience, playType);
+        }
+        return result;
     }
 
     private static String usd(int totalAmount) {
