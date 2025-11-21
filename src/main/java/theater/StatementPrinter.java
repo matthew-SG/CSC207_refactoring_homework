@@ -25,10 +25,9 @@ public class StatementPrinter {
         final StringBuilder result = new StringBuilder("Statement for "
                 + invoice.getCustomer() + System.lineSeparator());
         for (Performance performance : invoice.getPerformances()) {
-            final Play play = plays.get(performance.getPlayID());
             final int audience = performance.getAudience();
-            final String playType = play.getType();
-            final String playName = play.getName();
+            final String playType = getPlay(performance).getType();
+            final String playName = getPlay(performance).getName();
 
             final int thisAmount = getAmount(playType, audience);
 
@@ -41,12 +40,15 @@ public class StatementPrinter {
         return result.toString();
     }
 
+    private Play getPlay(Performance performance) {
+        return plays.get(performance.getPlayID());
+    }
+
     private int getTotalAmount() {
         int totalAmount = 0;
         for (Performance performance : invoice.getPerformances()) {
-            final Play play = plays.get(performance.getPlayID());
             final int audience = performance.getAudience();
-            final String playType = play.getType();
+            final String playType = getPlay(performance).getType();
 
             final int thisAmount = getAmount(playType, audience);
 
@@ -58,9 +60,8 @@ public class StatementPrinter {
     private int getTotalVolumeCredits() {
         int result = 0;
         for (Performance performance : invoice.getPerformances()) {
-            final Play play = plays.get(performance.getPlayID());
             final int audience = performance.getAudience();
-            final String playType = play.getType();
+            final String playType = getPlay(performance).getType();
 
             // add volume credits
             result += getVolumeCredits(audience, playType);
