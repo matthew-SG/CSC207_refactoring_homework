@@ -35,48 +35,54 @@ public class StatementPrinter {
             final String playType = play.getType();
             final String playName = play.getName();
 
-            final int rslt = getAmount(playType, audience);
+            final int thisAmount = getAmount(playType, audience);
 
             // add volume credits
-            volumeCredits += Math.max(audience - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
-            // add extra credit for every five comedy attendees
-            if ("comedy".equals(playType)) {
-                volumeCredits += audience / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
-            }
+            volumeCredits += getVolumeCredits(audience, playType);
 
             // print line for this order
-            result.append(String.format("  %s: %s (%s seats)%n", playName, frmt.format(rslt
+            result.append(String.format("  %s: %s (%s seats)%n", playName, frmt.format(thisAmount
                     / Constants.PERCENT_FACTOR), audience));
-            totalAmount += rslt;
+            totalAmount += thisAmount;
         }
         result.append(String.format("Amount owed is %s%n", frmt.format(totalAmount / Constants.PERCENT_FACTOR)));
         result.append(String.format("You earned %s credits%n", volumeCredits));
         return result.toString();
     }
 
+    private static int getVolumeCredits(int audience, String playType) {
+        int result = 0;
+        result += Math.max(audience - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
+        // add extra credit for every five comedy attendees
+        if ("comedy".equals(playType)) {
+            result += audience / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
+        }
+        return result;
+    }
+
     private static int getAmount(String playType, int audience) {
-        int thisAmount = 0;
+        int result = 0;
         switch (playType) {
             case "tragedy":
-                thisAmount = Constants.TRAGEDY_BASE_AMOUNT;
+                result = Constants.TRAGEDY_BASE_AMOUNT;
                 if (audience > Constants.TRAGEDY_AUDIENCE_THRESHOLD) {
-                    thisAmount += Constants.TRAGEDY_OVER_BASE_CAPACITY_PER_PERSON * (audience
+                    result += Constants.TRAGEDY_OVER_BASE_CAPACITY_PER_PERSON * (audience
                             - Constants.TRAGEDY_AUDIENCE_THRESHOLD);
                 }
                 break;
             case "comedy":
-                thisAmount = Constants.COMEDY_BASE_AMOUNT;
+                result = Constants.COMEDY_BASE_AMOUNT;
                 if (audience > Constants.COMEDY_AUDIENCE_THRESHOLD) {
-                    thisAmount += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT
+                    result += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT
                             + (Constants.COMEDY_OVER_BASE_CAPACITY_PER_PERSON
                             * (audience - Constants.COMEDY_AUDIENCE_THRESHOLD));
                 }
-                thisAmount += Constants.COMEDY_AMOUNT_PER_AUDIENCE * audience;
+                result += Constants.COMEDY_AMOUNT_PER_AUDIENCE * audience;
                 break;
             default:
                 throw new RuntimeException(String.format("unknown type: %s", playType));
         }
-        return thisAmount;
+        return result;
     }
 
     public Invoice getInvoice() {
